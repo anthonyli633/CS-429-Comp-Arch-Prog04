@@ -75,11 +75,11 @@ static void sim_error(void) {
 }
 
 static uint32_t mem_read_u32(CPU *cpu, uint64_t addr) {
-    if (addr > (uint64_t)cpu->mem_size - 4) sim_error();
-    return ((uint32_t)cpu->mem[addr]     << 24)
-         | ((uint32_t)cpu->mem[addr + 1] << 16)
-         | ((uint32_t)cpu->mem[addr + 2] << 8)
-         | ((uint32_t)cpu->mem[addr + 3]);
+    if (addr > (uint64_t)cpu->mem_size - 4) sim_error();   // prevents wrap
+    return (uint32_t)cpu->mem[addr]
+         | ((uint32_t)cpu->mem[addr + 1] << 8)
+         | ((uint32_t)cpu->mem[addr + 2] << 16)
+         | ((uint32_t)cpu->mem[addr + 3] << 24);
 }
 static uint64_t mem_read_u64(CPU *cpu, uint64_t addr) {
     if (addr > (uint64_t)cpu->mem_size - 8) sim_error();
@@ -177,8 +177,8 @@ static void exec_return(CPU *cpu, uint32_t instr) {
 }
 static void exec_brgt(CPU *cpu, uint32_t instr) {
     uint8_t rd = get_rd(instr);
-    uint8_t rs = get_rs(instr);
-    uint8_t rt = get_rt(instr);
+    int8_t rs = get_rs(instr);
+    int8_t rt = get_rt(instr);
     if ((int64_t)cpu->regs[rs] > (int64_t)cpu->regs[rt]) cpu->pc = (uint32_t)cpu->regs[rd];
     else cpu->pc += 4;
 }
@@ -234,8 +234,8 @@ static void exec_mov_reg(CPU *cpu, uint32_t instr) {
 static void exec_mov_lit(CPU *cpu, uint32_t instr) {
     uint8_t rd = get_rd(instr);
     uint64_t L = (uint64_t)(get_L(instr) & 0xFFF);
-    uint64_t mask = ((uint64_t)0xFFF) << 52;
-    cpu->regs[rd] = (cpu->regs[rd] & ~mask) | (L << 52);
+    uint64_t mask = 0xFFFULL;
+    cpu->regs[rd] = (cpu->regs[rd] & ~mask) | (L & mask);
 }
 static void exec_mov_mem_wr(CPU *cpu, uint32_t instr) {
     uint8_t rd = get_rd(instr);
