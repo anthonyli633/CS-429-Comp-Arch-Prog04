@@ -75,11 +75,11 @@ static void sim_error(void) {
 }
 
 static uint32_t mem_read_u32(CPU *cpu, uint64_t addr) {
-    if (addr > (uint64_t)cpu->mem_size - 4) sim_error();   // prevents wrap
-    return (uint32_t)cpu->mem[addr]
-         | ((uint32_t)cpu->mem[addr + 1] << 8)
-         | ((uint32_t)cpu->mem[addr + 2] << 16)
-         | ((uint32_t)cpu->mem[addr + 3] << 24);
+    if (addr > (uint64_t)cpu->mem_size - 4) sim_error();
+    return ((uint32_t)cpu->mem[addr]     << 24)
+         | ((uint32_t)cpu->mem[addr + 1] << 16)
+         | ((uint32_t)cpu->mem[addr + 2] << 8)
+         | ((uint32_t)cpu->mem[addr + 3]);
 }
 static uint64_t mem_read_u64(CPU *cpu, uint64_t addr) {
     if (addr > (uint64_t)cpu->mem_size - 8) sim_error();
