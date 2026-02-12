@@ -58,6 +58,11 @@ static inline uint8_t get_rd(uint32_t instr) { return (instr >> 22) & 0x1F; }
 static inline uint8_t get_rs(uint32_t instr) { return (instr >> 17) & 0x1F; }
 static inline uint8_t get_rt(uint32_t instr) { return (instr >> 12) & 0x1F; }
 static inline uint32_t get_L(uint32_t instr) { return instr & 0xFFF; }
+static inline int32_t get_L_signed(uint32_t instr) {
+    int32_t L = instr & 0xFFF;
+    if (L & 0x800) L |= ~0xFFF;
+    return L;
+}
 
 static void io_error(void) {
 	fprintf(stderr, "Invalid tinker filepath\n");
@@ -147,7 +152,7 @@ static void exec_brr(CPU *cpu, uint32_t instr) {
     cpu->pc += cpu->regs[rd];
 }
 static void exec_brr_l(CPU *cpu, uint32_t instr) {
-    uint32_t L = get_L(instr);
+    int32_t L = get_L_signed(instr);
     cpu->pc += L;
 }
 static void exec_brnz(CPU *cpu, uint32_t instr) {
@@ -206,7 +211,7 @@ static void exec_priv(CPU *cpu, uint32_t instr) {
 static void exec_mov_mem_rd(CPU *cpu, uint32_t instr) {
     uint8_t rd = get_rd(instr);
     uint8_t rs = get_rs(instr);
-    uint32_t L = get_L(instr);
+    int32_t L = get_L_signed(instr);
     cpu->regs[rd] = mem_read_u64(cpu, cpu->regs[rs] + L);
 }
 static void exec_mov_reg(CPU *cpu, uint32_t instr) {
@@ -216,14 +221,14 @@ static void exec_mov_reg(CPU *cpu, uint32_t instr) {
 }
 static void exec_mov_lit(CPU *cpu, uint32_t instr) {
     uint8_t rd = get_rd(instr);
-    int32_t L  = get_L(instr);
+    uint64_t L = (uint64_t)(get_L(instr) & 0xFFF);
     uint64_t mask = ((uint64_t)0xFFF) << 52;
-    cpu->regs[rd] = (cpu->regs[rd] & ~mask) | ((uint64_t)L << 52);
+    cpu->regs[rd] = (cpu->regs[rd] & ~mask) | (L << 52);
 }
 static void exec_mov_mem_wr(CPU *cpu, uint32_t instr) {
     uint8_t rd = get_rd(instr);
     uint8_t rs = get_rs(instr);
-    uint32_t L = get_L(instr);
+    int32_t L = get_L_signed(instr);
     mem_write_u64(cpu, cpu->regs[rd] + L, cpu->regs[rs]);
 }
 
