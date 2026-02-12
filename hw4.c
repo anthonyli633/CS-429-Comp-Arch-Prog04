@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <errno.h>
 
 #define MEM_SIZE (512u * 1024u)
 #define PROG_BASE 0x1000u
@@ -191,9 +192,16 @@ static void exec_input(CPU *cpu, uint32_t instr) {
     uint8_t rs = get_rs(instr);
     uint64_t port = cpu->regs[rs];
     if (port != 0) { cpu->pc += 4; return; }
-    uint64_t value;
-    if (scanf("%" SCNu64, &value) != 1) sim_error();
-    cpu->regs[rd] = value;
+    char buf[256];
+    if (scanf("%255s", buf) != 1) sim_error();
+    
+    errno = 0;
+    char *end = NULL;
+    unsigned long long v = strtoull(buf, &end, 10);
+    if (errno != 0 || end == buf || *end != '\0') sim_error();
+    if (buf[0] == '-') sim_error();
+
+    cpu->regs[rd] = (uint64_t)v;
     cpu->pc += 4;
 }
 static void exec_output(CPU *cpu, uint32_t instr) {
