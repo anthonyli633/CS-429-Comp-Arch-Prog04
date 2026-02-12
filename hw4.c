@@ -179,7 +179,7 @@ static void exec_brgt(CPU *cpu, uint32_t instr) {
     uint8_t rd = get_rd(instr);
     uint8_t rs = get_rs(instr);
     uint8_t rt = get_rt(instr);
-    if (cpu->regs[rs] > cpu->regs[rt]) cpu->pc = cpu->regs[rd];
+    if ((int64_t)cpu->regs[rs] > (int64_t)cpu->regs[rt]) cpu->pc = (uint32_t)cpu->regs[rd];
     else cpu->pc += 4;
 }
 
@@ -194,7 +194,7 @@ static void exec_input(CPU *cpu, uint32_t instr) {
     if (port != 0) { cpu->pc += 4; return; }
     char buf[256];
     if (scanf("%255s", buf) != 1) sim_error();
-    
+
     errno = 0;
     char *end = NULL;
     unsigned long long v = strtoull(buf, &end, 10);
