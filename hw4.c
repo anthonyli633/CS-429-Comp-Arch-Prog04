@@ -74,20 +74,20 @@ static void sim_error(void) {
 }
 
 static uint32_t mem_read_u32(CPU *cpu, uint64_t addr) {
-    if (addr + 3 >= cpu->mem_size) sim_error();
+    if (addr > (uint64_t)cpu->mem_size - 4) sim_error();   // prevents wrap
     return (uint32_t)cpu->mem[addr]
          | ((uint32_t)cpu->mem[addr + 1] << 8)
          | ((uint32_t)cpu->mem[addr + 2] << 16)
          | ((uint32_t)cpu->mem[addr + 3] << 24);
 }
 static uint64_t mem_read_u64(CPU *cpu, uint64_t addr) {
-    if (addr + 7 >= cpu->mem_size) sim_error();
+    if (addr > (uint64_t)cpu->mem_size - 8) sim_error();
     uint64_t x = 0;
     for (int i = 0; i < 8; i++) x |= ((uint64_t)cpu->mem[addr + i]) << (8*i);
     return x;
 }
 static void mem_write_u64(CPU *cpu, uint64_t addr, uint64_t val) {
-    if (addr + 7 >= cpu->mem_size) sim_error();
+    if (addr > (uint64_t)cpu->mem_size - 8) sim_error();
     for (int i = 0; i < 8; i++) cpu->mem[addr + i] = (uint8_t)((val >> (8*i)) & 0xFF);
 }
 
@@ -163,12 +163,16 @@ static void exec_brnz(CPU *cpu, uint32_t instr) {
 }
 static void exec_call(CPU *cpu, uint32_t instr) {
     uint8_t rd = get_rd(instr);
-    mem_write_u64(cpu, cpu->regs[31] - 8, cpu->pc + 4);
-    cpu->pc = cpu->regs[rd];
+    uint64_t sp = cpu->regs[31];
+    if (sp < 8) sim_error();
+    mem_write_u64(cpu, sp - 8, (uint64_t)(cpu->pc + 4));
+    cpu->pc = (uint32_t)cpu->regs[rd];
 }
 static void exec_return(CPU *cpu, uint32_t instr) {
     (void)instr;
-    cpu->pc = mem_read_u64(cpu, cpu->regs[31] - 8);
+    uint64_t sp = cpu->regs[31];
+    if (sp < 8) sim_error();
+    cpu->pc = (uint32_t)mem_read_u64(cpu, sp - 8);
 }
 static void exec_brgt(CPU *cpu, uint32_t instr) {
     uint8_t rd = get_rd(instr);
