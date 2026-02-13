@@ -18,10 +18,10 @@ typedef struct CPU {
 typedef void (*instr_fn)(CPU *cpu, uint32_t instr);
 
 typedef enum {
-    OP_AND   = 0x00,
-    OP_OR    = 0x01,
-    OP_XOR   = 0x02,
-    OP_NOT   = 0x03,
+    OP_AND    = 0x00,
+    OP_OR     = 0x01,
+    OP_XOR    = 0x02,
+    OP_NOT    = 0x03,
     OP_SHFTR  = 0x04,
     OP_SHFTRI = 0x05,
     OP_SHFTL  = 0x06,
@@ -34,20 +34,20 @@ typedef enum {
     OP_RETURN = 0x0D,
     OP_BRGT   = 0x0E,
     OP_PRIV   = 0x0F,
-    OP_MOV_MEM_RD = 0x10,
-    OP_MOV_REG    = 0x11,
-    OP_MOV_LIT    = 0x12,
-    OP_MOV_MEM_WR = 0x13,
-    OP_ADDF  = 0x14,
-    OP_SUBF  = 0x15,
-    OP_MULF  = 0x16,
-    OP_DIVF  = 0x17,
-    OP_ADD   = 0x18,
-    OP_ADDI  = 0x19,
-    OP_SUB   = 0x1A,
-    OP_SUBI  = 0x1B,
-    OP_MUL   = 0x1C,
-    OP_DIV   = 0x1D,
+    OP_MOV_MR = 0x10,
+    OP_MOV_RR = 0x11,
+    OP_MOV_RL = 0x12,
+    OP_MOV_RM = 0x13,
+    OP_ADDF   = 0x14,
+    OP_SUBF   = 0x15,
+    OP_MULF   = 0x16,
+    OP_DIVF   = 0x17,
+    OP_ADD    = 0x18,
+    OP_ADDI   = 0x19,
+    OP_SUB    = 0x1A,
+    OP_SUBI   = 0x1B,
+    OP_MUL    = 0x1C,
+    OP_DIV    = 0x1D,
 
     NUM_OPCODES = 0x20   // opcodes go 0x00–0x1D
 } opcode_t;
@@ -220,24 +220,24 @@ static void exec_priv(CPU *cpu, uint32_t instr) {
     else { exec_illegal(cpu, instr); }
 }
 
-static void exec_mov_mem_rd(CPU *cpu, uint32_t instr) {
+static void exec_mov_mr(CPU *cpu, uint32_t instr) {
     uint8_t rd = get_rd(instr);
     uint8_t rs = get_rs(instr);
     int32_t L = get_L_signed(instr);
     cpu->regs[rd] = mem_read_u64(cpu, cpu->regs[rs] + L);
 }
-static void exec_mov_reg(CPU *cpu, uint32_t instr) {
+static void exec_mov_rr(CPU *cpu, uint32_t instr) {
     uint8_t rd = get_rd(instr);
     uint8_t rs = get_rs(instr);
     cpu->regs[rd] = cpu->regs[rs];
 }
-static void exec_mov_lit(CPU *cpu, uint32_t instr) {
+static void exec_mov_rl(CPU *cpu, uint32_t instr) {
     uint8_t rd = get_rd(instr);
     uint64_t L = (uint64_t)(get_L(instr) & 0xFFF);
     uint64_t mask = 0xFFFULL;
     cpu->regs[rd] = (cpu->regs[rd] & ~mask) | (L & mask);
 }
-static void exec_mov_mem_wr(CPU *cpu, uint32_t instr) {
+static void exec_mov_rm(CPU *cpu, uint32_t instr) {
     uint8_t rd = get_rd(instr);
     uint8_t rs = get_rs(instr);
     int32_t L = get_L_signed(instr);
@@ -330,10 +330,10 @@ static void exec_div(CPU *cpu, uint32_t instr) {
 
 void init_instr_table(void) {
     for (int i = 0; i < NUM_OPCODES; i++) { instr_table[i] = exec_illegal; }
-    instr_table[OP_AND] = exec_and;
-    instr_table[OP_OR]  = exec_or;
-    instr_table[OP_XOR] = exec_xor;
-    instr_table[OP_NOT] = exec_not;
+    instr_table[OP_AND]    = exec_and;
+    instr_table[OP_OR]     = exec_or;
+    instr_table[OP_XOR]    = exec_xor;
+    instr_table[OP_NOT]    = exec_not;
     instr_table[OP_SHFTR]  = exec_shftr;
     instr_table[OP_SHFTRI] = exec_shftri;
     instr_table[OP_SHFTL]  = exec_shftl;
@@ -345,21 +345,21 @@ void init_instr_table(void) {
     instr_table[OP_CALL]   = exec_call;
     instr_table[OP_RETURN] = exec_return;
     instr_table[OP_BRGT]   = exec_brgt;
-    instr_table[OP_PRIV] = exec_priv;
-    instr_table[OP_MOV_MEM_RD] = exec_mov_mem_rd;
-    instr_table[OP_MOV_REG]    = exec_mov_reg;
-    instr_table[OP_MOV_LIT]    = exec_mov_lit;
-    instr_table[OP_MOV_MEM_WR] = exec_mov_mem_wr;
-    instr_table[OP_ADDF] = exec_addf;
-    instr_table[OP_SUBF] = exec_subf;
-    instr_table[OP_MULF] = exec_mulf;
-    instr_table[OP_DIVF] = exec_divf;
-    instr_table[OP_ADD]  = exec_add;
-    instr_table[OP_ADDI] = exec_addi;
-    instr_table[OP_SUB]  = exec_sub;
-    instr_table[OP_SUBI] = exec_subi;
-    instr_table[OP_MUL]  = exec_mul;
-    instr_table[OP_DIV]  = exec_div;
+    instr_table[OP_PRIV]   = exec_priv;
+    instr_table[OP_MOV_MR] = exec_mov_mr;
+    instr_table[OP_MOV_RR] = exec_mov_rr;
+    instr_table[OP_MOV_RL] = exec_mov_rl;
+    instr_table[OP_MOV_RM] = exec_mov_rm;
+    instr_table[OP_ADDF]   = exec_addf;
+    instr_table[OP_SUBF]   = exec_subf;
+    instr_table[OP_MULF]   = exec_mulf;
+    instr_table[OP_DIVF]   = exec_divf;
+    instr_table[OP_ADD]    = exec_add;
+    instr_table[OP_ADDI]   = exec_addi;
+    instr_table[OP_SUB]    = exec_sub;
+    instr_table[OP_SUBI]   = exec_subi;
+    instr_table[OP_MUL]    = exec_mul;
+    instr_table[OP_DIV]    = exec_div;
 }
 
 void step(CPU *cpu, uint32_t instr) {
